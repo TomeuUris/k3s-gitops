@@ -1,4 +1,4 @@
-apiVersion: traefik.containo.us/v1alpha1
+apiVersion: traefik.io/v1alpha1
 kind: IngressRoute
 metadata:
   name: truenas-external
@@ -19,7 +19,7 @@ spec:
           namespace: {{ .Values.truenas.namespace }}
   tls: {}
 ---
-apiVersion: traefik.containo.us/v1alpha1
+apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
   name: headers
@@ -29,7 +29,7 @@ spec:
     customRequestHeaders:
       X-Forwarded-Ssl: "on"
 ---
-apiVersion: traefik.containo.us/v1alpha1
+apiVersion: traefik.io/v1alpha1
 kind: IngressRouteUDP
 metadata:
   name: truenas-external-netbios-ns
@@ -42,7 +42,7 @@ spec:
     - name: {{ .Values.truenas.service }}-samba
       port: 137
 ---
-apiVersion: traefik.containo.us/v1alpha1
+apiVersion: traefik.io/v1alpha1
 kind: IngressRouteUDP
 metadata:
   name: netbios-dgm-ingress
@@ -55,7 +55,7 @@ spec:
     - name: {{ .Values.truenas.service }}-samba
       port: 138
 ---
-apiVersion: traefik.containo.us/v1alpha1
+apiVersion: traefik.io/v1alpha1
 kind: IngressRouteTCP
 metadata:
   name: netbios-ssn-ingress
@@ -69,7 +69,7 @@ spec:
     - name: {{ .Values.truenas.service }}-samba
       port: 139
 ---
-apiVersion: traefik.containo.us/v1alpha1
+apiVersion: traefik.io/v1alpha1
 kind: IngressRouteTCP
 metadata:
   name: microsoft-ds-ingress
