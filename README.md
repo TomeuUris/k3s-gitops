@@ -35,6 +35,68 @@ k3s-gitops (Public - Safe to Share)    k3s-gitops-secrets (Private - Never Publi
 
 ## 🚀 Quick Start
 
+### Install
+
+Run the installation playbook with the private inventory:
+
+```bash
+ansible-playbook \
+  -i ../git-ops/ansible/inventory.ini \
+  ansible/site.yml \
+  --ask-pass \
+  --ask-become-pass
+```
+
+For a minimal Debian VM without `sudo`, add `--become-method=su` on the
+first run. The playbook detects whether `sudo` is installed and only uses
+`su` when it needs to install it.
+
+### Uninstall
+
+To destroy the test cluster, including K3s, workloads, persistent cluster data,
+and Helm, run the separate uninstall playbook with explicit confirmation:
+
+```bash
+ansible-playbook \
+  -i ../git-ops/ansible/inventory.ini \
+  ansible/uninstall.yml \
+  --ask-pass \
+  --ask-become-pass \
+  -e confirm_uninstall=true
+```
+
+The uninstall playbook leaves SSH and sudo installed so the VM remains
+accessible. To keep Helm installed, add `-e remove_helm=false`. This operation
+is destructive and should only be used against the intended test VM.
+
+### Configure kubectl locally
+
+The install playbook does not modify the Ansible control machine. After the
+cluster is ready, configure local `kubectl` with the separate playbook:
+
+```bash
+ansible-playbook \
+  -i ../git-ops/ansible/inventory.ini \
+  ansible/configure-kubectl.yml \
+  --ask-pass \
+  --ask-become-pass
+```
+
+This writes `~/.kube/k3s-gitops.yaml` and verifies access. It does not install
+`kubectl` automatically. For an automated Linux control machine where
+`kubectl` is absent, opt in explicitly:
+
+```bash
+ansible-playbook \
+  -i ../git-ops/ansible/inventory.ini \
+  ansible/configure-kubectl.yml \
+  --ask-pass \
+  --ask-become-pass \
+  -e install_kubectl=true
+```
+
+Use `-e kubeconfig_path=/path/to/config` to write a different kubeconfig.
+
 ### 1. Prerequisites
 - Two repositories cloned side-by-side
 - Ansible installed on your machine

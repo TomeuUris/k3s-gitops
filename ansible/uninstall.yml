@@ -1,0 +1,67 @@
+---
+- name: Uninstall K3s cluster and bootstrap tooling
+  hosts: k3s_cluster
+  gather_facts: false
+  become: true
+  vars:
+    confirm_uninstall: false
+    remove_helm: true
+  pre_tasks:
+    - name: Require explicit destructive confirmation
+      ansible.builtin.assert:
+        that:
+          - confirm_uninstall | bool
+        fail_msg: >-
+          This removes K3s, workloads, and cluster data. Re-run with
+          -e confirm_uninstall=true if this is intentional.
+        quiet: true
+
+    - name: Check for K3s uninstall script
+      ansible.builtin.stat:
+        path: /usr/local/bin/k3s-uninstall.sh
+      register: k3s_uninstall_script
+
+  tasks:
+    - name: Run the K3s uninstall script
+      ansible.builtin.command: /usr/local/bin/k3s-uninstall.sh
+      when: k3s_uninstall_script.stat.exists
+
+    - name: Stop and disable K3s when no uninstall script exists
+      ansible.builtin.systemd:
+        name: k3s
+        state: stopped
+        enabled: false
+      failed_when: false
+      when: not k3s_uninstall_script.stat.exists
+
+    - name: Remove K3s service files
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - /etc/systemd/system/k3s.service
+        - /etc/systemd/system/k3s.service.env
+        - /usr/local/bin/k3s-uninstall.sh
+        - /usr/local/bin/k3s-agent-uninstall.sh
+
+    - name: Remove K3s cluster and persistent data
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - /var/lib/rancher/k3s
+        - /etc/rancher/k3s
+        - /var/lib/kubelet
+        - /var/lib/cni
+        - /etc/cni
+        - /var/lib/longhorn
+
+    - name: Remove Helm when requested
+      ansible.builtin.file:
+        path: /usr/local/bin/helm
+        state: absent
+      when: remove_helm | bool
+
+    - name: Reload systemd after removing K3s
+      ansible.builtin.systemd:
+        daemon_reload: true

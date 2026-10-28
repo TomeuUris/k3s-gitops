@@ -1,0 +1,99 @@
+---
+- name: Prepare the Ansible control machine for kubectl
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars:
+    install_kubectl: false
+    kubeconfig_path: "{{ lookup('env', 'HOME') }}/.kube/k3s-gitops.yaml"
+    kubectl_version: ""
+  tasks:
+    - name: Check whether kubectl is installed locally
+      ansible.builtin.command: kubectl version --client
+      register: kubectl_check
+      changed_when: false
+      failed_when: false
+
+    - name: Require kubectl or opt-in installation
+      ansible.builtin.assert:
+        that:
+          - kubectl_check.rc == 0 or install_kubectl | bool
+        fail_msg: >-
+          kubectl is not installed on the control machine. Install it or
+          rerun with -e install_kubectl=true.
+
+    - name: Resolve the requested kubectl version
+      ansible.builtin.uri:
+        url: https://dl.k8s.io/release/stable.txt
+        return_content: true
+      register: kubectl_stable_version
+      when:
+        - kubectl_check.rc != 0
+        - install_kubectl | bool
+        - kubectl_version | length == 0
+
+    - name: Set the kubectl version
+      ansible.builtin.set_fact:
+        kubectl_release: >-
+          {{ kubectl_version if kubectl_version | length > 0 else
+             kubectl_stable_version.content | trim }}
+      when:
+        - kubectl_check.rc != 0
+        - install_kubectl | bool
+
+    - name: Install kubectl on the control machine
+      become: true
+      ansible.builtin.get_url:
+        url: "https://dl.k8s.io/release/{{ kubectl_release }}/bin/linux/amd64/kubectl"
+        dest: /usr/local/bin/kubectl
+        mode: "0755"
+      when:
+        - kubectl_check.rc != 0
+        - install_kubectl | bool
+
+- name: Copy the K3s kubeconfig to the control machine
+  hosts: master
+  gather_facts: false
+  become: true
+  vars:
+    kubeconfig_path: "{{ lookup('env', 'HOME') }}/.kube/k3s-gitops.yaml"
+  tasks:
+    - name: Read the K3s kubeconfig
+      ansible.builtin.slurp:
+        src: /etc/rancher/k3s/k3s.yaml
+      register: k3s_kubeconfig
+
+    - name: Create the local kubeconfig directory
+      ansible.builtin.file:
+        path: "{{ kubeconfig_path | dirname }}"
+        state: directory
+        mode: "0700"
+      delegate_to: localhost
+      become: false
+
+    - name: Write a local kubeconfig for this cluster
+      ansible.builtin.copy:
+        content: >-
+          {{
+            k3s_kubeconfig.content
+            | b64decode
+            | replace(
+                'https://localhost:6443',
+                'https://' ~ inventory_hostname ~ ':6443'
+              )
+            | replace(
+                'https://127.0.0.1:6443',
+                'https://' ~ inventory_hostname ~ ':6443'
+              )
+          }}
+        dest: "{{ kubeconfig_path }}"
+        mode: "0600"
+      delegate_to: localhost
+      become: false
+
+    - name: Verify the local kubectl connection
+      ansible.builtin.command:
+        cmd: kubectl --kubeconfig "{{ kubeconfig_path }}" get nodes
+      delegate_to: localhost
+      become: false
+      changed_when: false
