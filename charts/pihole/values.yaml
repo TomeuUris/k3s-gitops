@@ -1,0 +1,20 @@
+namespace: pihole
+deployment:
+  name: pihole
+  image: pihole/pihole:latest
+  imagePullPolicy: IfNotPresent
+  replicas: 1
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 256Mi
+  env:
+    timezone: Europe/Madrid
+service:
+  name: pihole
+  loadBalancerIP: 192.0.2.5
+  dashboardPort: 8000
+password: ""

@@ -1,0 +1,21 @@
+{{ if index .Values "argocd-image-updater" "enabled" }}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: argocd-image-updater-app
+  namespace: argocd
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    - repoURL: https://github.com/argoproj-labs/argocd-image-updater.git
+      targetRevision: {{ index .Values "argocd-image-updater" "chart_revision" }}
+      path: manifests
+    - repoURL: {{ .Values.global.private_repo_url }}
+      targetRevision: {{ .Values.global.private_repo_revision }}
+      ref: values
+  destination:
+    namespace: argocd
+    server: https://kubernetes.default.svc
+{{ end }}

@@ -1,0 +1,29 @@
+{{ if .Values.ingresses.enabled }}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: ingresses
+  namespace: argocd
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  sources:
+    # Public chart from k3s-gitops
+    - repoURL: {{ .Values.global.public_repo_url }}
+      path: charts/ingresses
+      targetRevision: {{ .Values.ingresses.chart_revision }}
+      helm:
+        valueFiles:
+          - $values/{{ .Values.ingresses.values_file }}
+    # Private values from k3s-gitops-secrets
+    - repoURL: {{ .Values.global.private_repo_url }}
+      targetRevision: {{ .Values.global.private_repo_revision }}
+      ref: values
+  destination:
+    server: https://kubernetes.default.svc
+  syncPolicy:
+    automated:
+      selfHeal: true
+      prune: true
+{{ end }}

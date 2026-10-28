@@ -1,0 +1,9 @@
+apiVersion: v2
+description: A Helm chart for installing cert-manager, declare letsencrypt issuers and generate certs
+icon: https://helm.sh/img/helm.svg
+name: kubecluster-cert-manager
+version: "0.0.1"
+dependencies:
+  - name: cert-manager
+    version: v1.17.2
+    repository: https://charts.jetstack.io

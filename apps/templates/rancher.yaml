@@ -1,0 +1,28 @@
+{{ if .Values.rancher.enabled }}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: rancher-app
+  namespace: argocd
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  sources:
+    - chart: rancher
+      repoURL: https://releases.rancher.com/server-charts/stable
+      targetRevision: {{ .Values.rancher.chart_revision }}
+      helm:
+        valueFiles:
+          - $values/{{ .Values.rancher.values_file }}
+    - repoURL: {{ .Values.global.private_repo_url }}
+      targetRevision: {{ .Values.global.private_repo_revision }}
+      ref: values
+  destination:
+    namespace: cattle-system
+    server: https://kubernetes.default.svc
+  syncPolicy:
+    automated: {}
+    syncOptions:
+      - CreateNamespace=true
+{{ end }}

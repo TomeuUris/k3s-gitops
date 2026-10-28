@@ -1,0 +1,16 @@
+---
+apiVersion: v1
+kind: Endpoints
+metadata:
+  name: {{ .Values.pterodactylNode.service }}
+  namespace: {{ .Values.pterodactylNode.namespace }}
+subsets:
+- addresses:
+  - ip: {{ .Values.pterodactylNode.externalIp }}
+  ports:
+  - name: daemon
+    port: {{ .Values.pterodactylNode.daemonPort }}
+    protocol: TCP
+  - name: sftp
+    port: {{ .Values.pterodactylNode.sftpPort }}
+    protocol: TCP

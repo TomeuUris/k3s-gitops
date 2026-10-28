@@ -1,0 +1,13 @@
+---
+apiVersion: v1
+kind: Endpoints
+metadata:
+  name: {{ .Values.plex.service }}
+  namespace: {{ .Values.plex.namespace }}
+subsets:
+- addresses:
+  - ip: {{ .Values.plex.externalIp }}
+  ports:
+  - name: {{ .Values.plex.service }}
+    port: {{ .Values.plex.targetPort }}
+    protocol: TCP

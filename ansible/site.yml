@@ -1,0 +1,172 @@
+---
+# This must run before fact gathering because minimal Debian installs may not
+# include sudo yet. Run the initial bootstrap with --ask-become-pass
+# --become-method=su when connecting as a non-root user.
+- name: Bootstrap privilege escalation
+  hosts: k3s_cluster
+  gather_facts: false
+  become: true
+  become_method: su
+  tasks:
+    - name: Install sudo when missing
+      raw: |
+        if command -v sudo >/dev/null 2>&1; then
+          exit 0
+        fi
+        apt-get update
+        DEBIAN_FRONTEND=noninteractive apt-get install -y sudo
+
+    - name: Ensure remote user can use sudo
+      user:
+        name: "{{ ansible_user | default(ansible_user_id) }}"
+        groups: sudo
+        append: true
+
+# CHAPTER 1: Universal Preparation
+- name: Prepare all nodes
+  hosts: k3s_cluster
+  become: true
+  tasks:
+    - name: Install dependencies
+      apt:
+        update_cache: yes
+        name: [curl, sudo, iptables, tar]
+
+# CHAPTER 2: Master Node Setup
+- name: Setup Master Node
+  hosts: master
+  become: true
+  tasks:
+    - name: Install K3s Master
+      shell: |
+        curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC="--disable servicelb --disable traefik --write-kubeconfig-mode 644" sh -
+      args:
+        creates: /usr/local/bin/k3s
+
+    - name: Get Node Token from Master
+      slurp:
+        src: /var/lib/rancher/k3s/server/node-token
+      register: master_token_encoded
+
+    - name: Save Token as a Variable
+      set_fact:
+        node_token: "{{ master_token_encoded.content | b64decode | trim }}"
+
+# CHAPTER 3: Install Cluster Services (Handover to GitOps)
+- name: Install Cluster Services
+  hosts: master
+  become: true
+  environment:
+    KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+  tasks:
+    - name: Install Helm
+      unarchive:
+        src: https://get.helm.sh/helm-v3.13.1-linux-amd64.tar.gz
+        dest: /usr/local/bin
+        remote_src: yes
+        extra_opts: "--strip-components=1"
+        creates: /usr/local/bin/helm
+
+    - name: Add Helm Repositories
+      shell: |
+        helm repo add metallb https://metallb.github.io/metallb
+        helm repo add traefik https://traefik.github.io/charts
+        helm repo add argo https://argoproj.github.io/argo-helm
+        helm repo update
+
+    - name: Deeploy MetalLB via Helm
+      shell: helm upgrade --install metallb metallb/metallb --namespace metallb-system --create-namespace
+
+    - name: Wait for MetalLB CRDs
+      shell: kubectl wait --for=condition=established --timeout=60s crd/ipaddresspools.metallb.io
+
+    - name: Apply MetalLB Config from Template
+      template:
+        src: templates/metallb-config.j2
+        dest: /tmp/metallb-config.yaml
+    
+    - name: Execute MetalLB Manifest
+      shell: kubectl apply -f /tmp/metallb-config.yaml
+
+    - name: Deploy Traefik v3 (Enabled for WebSecure)
+      shell: |
+        helm upgrade --install traefik traefik/traefik \
+          --namespace traefik --create-namespace \
+          --set service.type=LoadBalancer \
+          --set "service.annotations.metallb\.universe\.tf/loadBalancerIPs={{ traefik_static_ip }}" \
+          --set ports.web.exposedPort=80 \
+          --set ports.websecure.exposedPort=443
+
+    - name: Deploy ArgoCD via Helm
+      shell: |
+        helm upgrade --install argocd argo/argo-cd \
+          --namespace argocd --create-namespace \
+          --set server.service.type=ClusterIP \
+          --set server.insecure=true
+
+    - name: Wait for ArgoCD to be ready
+      shell: kubectl wait --for=condition=available --timeout=300s deployment/argocd-server -n argocd
+
+    - name: Create GitHub credentials Secret for ArgoCD
+      no_log: true
+      shell: |
+        kubectl create secret generic github-credentials \
+          --from-literal=username={{ github_username }} \
+          --from-literal=token={{ github_token }} \
+          --namespace argocd \
+          --dry-run=client -o yaml | kubectl apply -f -
+
+    - name: Register public repository in ArgoCD
+      no_log: true
+      shell: |
+        kubectl apply -f - <<EOF
+        apiVersion: v1
+        kind: Secret
+        metadata:
+          name: repo-k3s-gitops
+          namespace: argocd
+          labels:
+            argocd.argoproj.io/secret-type: repository
+        stringData:
+          type: git
+          url: {{ public_repo_url }}
+          username: {{ github_username }}
+          password: {{ github_token }}
+        EOF
+
+    - name: Register private repository in ArgoCD
+      no_log: true
+      shell: |
+        kubectl apply -f - <<EOF
+        apiVersion: v1
+        kind: Secret
+        metadata:
+          name: repo-k3s-gitops-secrets
+          namespace: argocd
+          labels:
+            argocd.argoproj.io/secret-type: repository
+        stringData:
+          type: git
+          url: {{ private_repo_url }}
+          username: {{ github_username }}
+          password: {{ github_token }}
+        EOF
+
+    - name: Prepare ArgoCD Bootstrap Application
+      template:
+        src: templates/argocd-bootstrap.j2
+        dest: /tmp/argocd-bootstrap.yaml
+
+    - name: Apply Bootstrap (The Handover)
+      shell: kubectl apply -f /tmp/argocd-bootstrap.yaml
+
+# CHAPTER 4: Agent Node Setup (Ready for the future)
+- name: Join Agent Nodes to Cluster
+  hosts: agents
+  become: true
+  tasks:
+    - name: Install K3s Agent and Join
+      shell: |
+        curl -sfL https://get.k3s.io | K3S_URL=https://{{ hostvars[groups['master'][0]]['inventory_hostname'] }}:6443 K3S_TOKEN={{ hostvars[groups['master'][0]]['node_token'] }} sh -
+      args:
+        creates: /usr/local/bin/k3s

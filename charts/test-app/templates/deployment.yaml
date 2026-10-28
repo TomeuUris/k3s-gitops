@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Chart.Name }}
+  namespace: {{ .Chart.Name }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Chart.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Chart.Name }}
+    spec:
+      containers:
+        - name: {{ .Chart.Name }}
+          image: ghcr.io/your-username/ci-test-app:{{ .Values.image.tag }}
+          ports:
+            - containerPort: 8080
+          env:
+            - name: AUTHENTICATION_APIKEY
+              value: {{ .Values.env.apikey }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}

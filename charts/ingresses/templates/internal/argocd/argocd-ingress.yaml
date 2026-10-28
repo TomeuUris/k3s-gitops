@@ -1,0 +1,25 @@
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: argocd-dashboard
+  namespace: {{ .Values.argocd.namespace }}
+  annotations:
+    kubernetes.io/ingress.class: {{ .Values.ingressClass }}
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - kind: Rule
+      match: Host(`{{ .Values.argocd.host }}.{{ .Values.baseUri }}`)
+      priority: 10
+      services:
+        - name: {{ .Values.argocd.service }}
+          port: {{ .Values.argocd.port }}
+    - kind: Rule
+      match: Host(`{{ .Values.argocd.host }}.{{ .Values.baseUri }}`) && Headers(`Content-Type`, `application/grpc`)
+      priority: 11
+      services:
+        - name: {{ .Values.argocd.service }}
+          port: {{ .Values.argocd.port }}
+          scheme: h2c
+  tls: {}

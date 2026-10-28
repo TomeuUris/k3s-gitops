@@ -1,0 +1,38 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: docker-data-volume
+  labels:
+    directory: code-server-docker-data
+spec:
+  capacity:
+    storage: {{ .Values.volumes.dockerData.size }}
+  accessModes:
+  - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Delete
+  storageClassName: local
+  local:
+    path: {{ .Values.volumes.dockerData.path }}
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - kubecluster2
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: docker-data-claim
+spec:
+  storageClassName: local
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.volumes.dockerData.size }}
+  selector:
+    matchLabels:
+      directory: code-server-docker-data

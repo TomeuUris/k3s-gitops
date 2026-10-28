@@ -1,0 +1,84 @@
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: truenas-external
+  namespace: {{ .Values.truenas.namespace }}
+  annotations:
+    kubernetes.io/ingress.class: {{ .Values.ingressClass }}
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`{{ .Values.truenas.host }}.{{ .Values.baseUri }}`)
+      kind: Rule
+      services:
+        - name: {{ .Values.truenas.service }}
+          port: {{ .Values.truenas.port }}
+      middlewares:
+        - name: headers
+          namespace: {{ .Values.truenas.namespace }}
+  tls: {}
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: headers
+  namespace: {{ .Values.truenas.namespace }}
+spec:
+  headers:
+    customRequestHeaders:
+      X-Forwarded-Ssl: "on"
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRouteUDP
+metadata:
+  name: truenas-external-netbios-ns
+  namespace: {{ .Values.truenas.namespace }}
+spec:
+  entryPoints:
+    - netbios-ns
+  routes:
+  - services:
+    - name: {{ .Values.truenas.service }}-samba
+      port: 137
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRouteUDP
+metadata:
+  name: netbios-dgm-ingress
+  namespace: {{ .Values.truenas.namespace }}
+spec:
+  entryPoints:
+    - netbios-dgm
+  routes:
+  - services:
+    - name: {{ .Values.truenas.service }}-samba
+      port: 138
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRouteTCP
+metadata:
+  name: netbios-ssn-ingress
+  namespace: {{ .Values.truenas.namespace }}
+spec:
+  entryPoints:
+    - netbios-ssn
+  routes:
+  - match: HostSNI(`{{ .Values.truenas.host }}.{{ .Values.baseUri }}`)
+    services:
+    - name: {{ .Values.truenas.service }}-samba
+      port: 139
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRouteTCP
+metadata:
+  name: microsoft-ds-ingress
+  namespace: {{ .Values.truenas.namespace }}
+spec:
+  entryPoints:
+    - microsoft-ds
+  routes:
+  - match: HostSNI(`{{ .Values.truenas.host }}.{{ .Values.baseUri }}`)
+    services:
+    - name: {{ .Values.truenas.service }}-samba
+      port: 445

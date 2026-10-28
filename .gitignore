@@ -1,0 +1,25 @@
+.vscode/
+
+# Unabled modules
+environments/*
+!environments/README.md
+
+# Ansible inventory (keep template, ignore actual)
+ansible/inventory.ini
+!ansible/inventory.ini.example
+
+# Local secrets and credentials
+.env
+.env.*
+*.key
+*.pem
+*.p12
+*.pfx
+*.crt
+*.secret
+secrets/
+
+# Temporary files
+*.tmp
+*.swp
+*~

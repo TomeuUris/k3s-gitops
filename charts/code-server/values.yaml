@@ -1,0 +1,21 @@
+replicaCount: 1
+
+vscode:
+  image:
+    repository: code-server
+    tag: latest
+    pullPolicy: IfNotPresent
+
+dind:
+  image:
+    repository: docker
+    tag: dind
+    pullPolicy: IfNotPresent
+
+volumes:
+  dockerData:
+    path: /home/code-server/docker-data
+    size: 16Gi
+  workspace:
+    path: /home/code-server/workspace
+    size: 32Gi

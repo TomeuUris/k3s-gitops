@@ -1,0 +1,37 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.truenas.service }}
+  namespace: {{ .Values.truenas.namespace }}
+spec:
+  ports:
+  - name: {{ .Values.truenas.service }}
+    port: {{ .Values.truenas.port }}
+    protocol: TCP
+    targetPort: {{ .Values.truenas.targetPort }}
+  clusterIP: None
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.truenas.service }}-samba
+  namespace: {{ .Values.truenas.namespace }}
+spec:
+  ports:
+  - name: {{ .Values.truenas.service }}-samba-netbios-ns
+    port: 137
+    protocol: UDP
+    targetPort: 137
+  - name: {{ .Values.truenas.service }}-samba-netbios-dgm
+    port: 138
+    protocol: UDP
+    targetPort: 138
+  - name: {{ .Values.truenas.service }}-samba-netbios-ssn
+    port: 139
+    protocol: TCP
+    targetPort: 139
+  - name: {{ .Values.truenas.service }}-samba-microsoft-ds
+    port: 445
+    protocol: TCP
+    targetPort: 445
+  clusterIP: None

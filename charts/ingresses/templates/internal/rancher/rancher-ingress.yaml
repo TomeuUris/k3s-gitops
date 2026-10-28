@@ -1,0 +1,18 @@
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: rancher-dashboard
+  namespace: {{ .Values.rancher.namespace }}
+  annotations: 
+    kubernetes.io/ingress.class: {{ .Values.ingressClass }}
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`{{ .Values.rancher.host }}.{{ .Values.baseUri }}`)
+      kind: Rule
+      services:
+        - name: {{ .Values.rancher.service }}
+          port: {{ .Values.rancher.port }}
+  tls: {}

@@ -1,0 +1,17 @@
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: proxmox-external
+  namespace: {{ .Values.proxmox.namespace }}
+  annotations:
+    kubernetes.io/ingress.class: {{ .Values.ingressClass }}
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`{{ .Values.proxmox.host }}.{{ .Values.baseUri }}`)
+      kind: Rule
+      services:
+        - name: {{ .Values.proxmox.service }}
+          port: {{ .Values.proxmox.port }}
+  tls: {}

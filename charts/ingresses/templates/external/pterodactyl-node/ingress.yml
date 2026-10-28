@@ -1,0 +1,37 @@
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: pterodactyl-node-external
+  namespace: {{ .Values.pterodactylNode.namespace }}
+  annotations:
+    kubernetes.io/ingress.class: {{ .Values.ingressClass }}
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`{{ .Values.pterodactylNode.host }}.{{ .Values.baseUri }}`)
+      kind: Rule
+      services:
+        - name: {{ .Values.pterodactylNode.service }}
+          port: daemon
+  tls: {}
+
+---
+
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: pterodactyl-node-external-sftp
+  namespace: {{ .Values.pterodactylNode.namespace }}
+  annotations:
+    kubernetes.io/ingress.class: {{ .Values.ingressClass }}
+spec:
+  entryPoints:
+    - sftp
+  routes:
+    - match: Host(`{{ .Values.pterodactylNode.host }}.{{ .Values.baseUri }}`)
+      kind: Rule
+      services:
+        - name: {{ .Values.pterodactylNode.service }}
+          port: sftp
+  tls: {}

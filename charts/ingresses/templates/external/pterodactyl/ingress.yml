@@ -1,0 +1,17 @@
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: pterodactyl-external
+  namespace: {{ .Values.pterodactyl.namespace }}
+  annotations:
+    kubernetes.io/ingress.class: {{ .Values.ingressClass }}
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`{{ .Values.pterodactyl.host }}.{{ .Values.baseUri }}`)
+      kind: Rule
+      services:
+        - name: {{ .Values.pterodactyl.service }}
+          port: {{ .Values.pterodactyl.port }}
+  tls: {}

@@ -1,0 +1,28 @@
+{{ if .Values.keycloak.enabled }}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: keycloak-app
+  namespace: argocd
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  sources:
+    - chart: keycloak
+      repoURL: https://codecentric.github.io/helm-charts
+      targetRevision: {{ .Values.keycloak.chart_revision }}
+      helm:
+        valueFiles:
+          - $values/{{ .Values.keycloak.values_file }}
+    - repoURL: {{ .Values.global.private_repo_url }}
+      targetRevision: {{ .Values.global.private_repo_revision }}
+      ref: values
+  destination:
+    namespace: keycloak
+    server: https://kubernetes.default.svc
+  syncPolicy:
+    automated: {}
+    syncOptions:
+      - CreateNamespace=true
+{{ end }}

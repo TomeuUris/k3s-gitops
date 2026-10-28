@@ -1,0 +1,14 @@
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: jellyfin-security-headers
+  namespace: {{ .Values.jellyfin.namespace }}
+spec:
+  headers:
+    customResponseHeaders:
+      X-Robots-Tag: "noindex,nofollow,nosnippet,noarchive,notranslate,noimageindex"
+    stsSeconds: 315360000
+    stsIncludeSubdomains: true
+    stsPreload: true
+    frameDeny: true
+    contentTypeNosniff: true

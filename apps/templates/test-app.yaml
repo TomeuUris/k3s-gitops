@@ -1,0 +1,32 @@
+{{ if index .Values "test-app" "enabled" }}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: test-app
+  namespace: argocd
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
+  annotations:
+    argocd-image-updater.argoproj.io/image-list: ghcr.io/your-username/ci-test-app
+    argocd-image-updater.argoproj.io/write-back-method: git:secret:argocd/git-creds
+    argocd-image-updater.argoproj.io/git-branch: main
+spec:
+  project: default
+  sources:
+    - repoURL: {{ .Values.global.public_repo_url }}
+      path: charts/test-app
+      targetRevision: {{ index .Values "test-app" "chart_revision" }}
+      helm:
+        valueFiles:
+          - $values/{{ index .Values "test-app" "values_file" }}
+    - repoURL: {{ .Values.global.private_repo_url }}
+      targetRevision: {{ .Values.global.private_repo_revision }}
+      ref: values
+  destination:
+    namespace: test-app
+    server: https://kubernetes.default.svc
+  syncPolicy:
+    automated:
+      selfHeal: true
+      prune: true
+{{ end }}

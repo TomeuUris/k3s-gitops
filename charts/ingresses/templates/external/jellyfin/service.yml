@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.jellyfin.service }}
+  namespace: {{ .Values.jellyfin.namespace }}
+spec:
+  ports:
+  - name: {{ .Values.jellyfin.service }}
+    port: {{ .Values.jellyfin.port }}
+    protocol: TCP
+    targetPort: {{ .Values.jellyfin.targetPort }}
+  clusterIP: None

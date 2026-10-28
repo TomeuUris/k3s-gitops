@@ -1,0 +1,31 @@
+{{ if index .Values "cert-manager" "enabled" }}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: cert-manager-app
+  namespace: argocd
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  sources:
+    - repoURL: {{ .Values.global.public_repo_url }}
+      path: charts/cert-manager
+      targetRevision: {{ index .Values "cert-manager" "chart_revision" }}
+      helm:
+        valueFiles:
+          - $values/{{ index .Values "cert-manager" "values_file" }}
+    # Values from user's private repo
+    - repoURL: {{ .Values.global.private_repo_url }}
+      targetRevision: {{ .Values.global.private_repo_revision }}
+      ref: values
+  destination:
+    namespace: cert-manager
+    server: https://kubernetes.default.svc
+  syncPolicy:
+    automated:
+      selfHeal: true
+      prune: true
+    syncOptions:
+    - CreateNamespace=true
+{{ end }}

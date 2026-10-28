@@ -1,0 +1,21 @@
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: jellyfin-external
+  namespace: {{ .Values.jellyfin.namespace }}
+  annotations:
+    kubernetes.io/ingress.class: {{ .Values.ingressClass }}
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`{{ .Values.jellyfin.host }}.{{ .Values.baseUri }}`)
+      kind: Rule
+      middlewares:
+        - name: jellyfin-security-headers
+          namespace: {{ .Values.jellyfin.namespace }}
+      services:
+        - name: {{ .Values.jellyfin.service }}
+          port: {{ .Values.jellyfin.port }}
+          scheme: http
+  tls: {}

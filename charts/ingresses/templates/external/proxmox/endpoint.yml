@@ -1,0 +1,13 @@
+---
+apiVersion: v1
+kind: Endpoints
+metadata:
+  name: {{ .Values.proxmox.service }}
+  namespace: {{ .Values.proxmox.namespace }}
+subsets:
+- addresses:
+  - ip: {{ .Values.proxmox.externalIp }}
+  ports:
+  - name: {{ .Values.proxmox.service }}
+    port: {{ .Values.proxmox.targetPort }}
+    protocol: TCP

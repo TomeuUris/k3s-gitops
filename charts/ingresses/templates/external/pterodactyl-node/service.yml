@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.pterodactylNode.service }}
+  namespace: {{ .Values.pterodactylNode.namespace }}
+spec:
+  ports:
+  - name: daemon
+    port: 443
+    protocol: TCP
+    targetPort: {{ .Values.pterodactylNode.daemonPort }}
+  - name: sftp
+    port: {{ .Values.pterodactylNode.sftpPort }}
+    protocol: TCP
+    targetPort: {{ .Values.pterodactylNode.sftpPort }}
+  clusterIP: None

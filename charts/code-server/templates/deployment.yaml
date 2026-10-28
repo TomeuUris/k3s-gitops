@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "registry.fullname" . }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "registry.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "registry.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+      - name: dind
+        image: "{{ .Values.dind.image.repository }}:{{ .Values.dind.image.tag }}"
+        imagePullPolicy: {{ .Values.dind.image.pullPolicy }}
+        command: ["dockerd", "-H", "unix:///var/run/docker.sock", "-H", "tcp://0.0.0.0:2376"]
+        securityContext:
+          privileged: true
+        volumeMounts:
+        - name: docker-data
+          mountPath: /var/lib/docker
+        - name: workspace
+          mountPath: /home/vscode/dev
+      - name: vscode
+        image: "{{ .Values.vscode.image.repository }}:{{ .Values.vscode.image.tag }}"
+        imagePullPolicy: {{ .Values.vscode.image.pullPolicy }}
+        volumeMounts:
+        - name: workspace
+          mountPath: /home/vscode/dev
+        workingDir: /workspace
+        env:
+        - name: DOCKER_HOST
+          value: tcp://localhost:2376
+        - name: DONT_PROMPT_WSL_INSTALL
+          value: "true"
+      volumes:
+      - name: docker-data
+        persistentVolumeClaim:
+          claimName: docker-data-claim
+      - name: workspace
+        persistentVolumeClaim:
+          claimName: workspace-claim

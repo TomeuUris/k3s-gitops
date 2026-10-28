@@ -1,0 +1,10 @@
+image:
+  tag: latest
+ingress:
+  host: test-app.example.com
+resources:
+  limits:
+    cpu: 100m
+    memory: 256Mi
+env:
+  apikey: ""

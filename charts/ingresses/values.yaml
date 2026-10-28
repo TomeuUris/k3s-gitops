@@ -1,0 +1,102 @@
+baseUri: example.com
+ingressClass: traefik-external
+tlsCertSecret: cert-manager/example-com-tls
+argocd:
+  host: argocd
+  service: argocd-server
+  namespace: argocd
+  port: 80
+  tls:
+traefik:
+  host: traefik
+  namespace: traefik
+  secret:
+    users: ""
+rancher:
+  host: rancher
+  namespace: cattle-system
+  service: rancher-app
+  port: 80
+pihole:
+  host: pihole-external
+  namespace: pihole
+  service: pihole
+  port: 8000
+vault:
+  host: vault
+  namespace: vault
+  service: vault-app-ui
+  port: 8200
+keycloak:
+  host: keycloak
+  namespace: keycloak
+  service: keycloak-app-http
+  port: 8443
+registry:
+  host: registry
+  namespace: registry
+  service: registry
+  port: 80
+pfsense:
+  host: pfsense
+  namespace: pfsense
+  service: pfsense-external
+  port: 443
+  targetPort: 8443
+  externalIp: 192.0.2.1
+truenas:
+  host: truenas
+  namespace: truenas
+  service: truenas-external
+  port: 443
+  targetPort: 443
+  externalIp: 192.0.2.2
+proxmox:
+  host: proxmox
+  namespace: proxmox
+  service: proxmox-external
+  port: 443
+  targetPort: 8006
+  externalIp: 192.0.2.3
+plex:
+  host: plex
+  namespace: plex
+  service: plex-external
+  port: 443
+  targetPort: 32400
+  externalIp: 192.0.2.2
+nextcloud:
+  host: nextcloud
+  namespace: nextcloud
+  service: nextcloud-external
+  port: 443
+  targetPort: 9001
+  externalIp: 192.0.2.2
+jellyfin:
+  host: jellyfin
+  namespace: jellyfin
+  service: jellyfin-external
+  port: 443
+  targetPort: 30013
+  externalIp: 192.0.2.2
+pterodactyl:
+  host: pterodactyl
+  namespace: pterodactyl
+  service: pterodactyl-external
+  port: 443
+  targetPort: 443
+  externalIp: 192.0.2.4
+pterodactylNode:
+  host: pterodactyl-node
+  namespace: pterodactyl
+  service: pterodactyl-node-external
+  daemonPort: 8080
+  sftpPort: 2023
+  externalIp: 192.0.2.4
+tlsstores:
+  - name: default
+    secret: example-com-tls
+    namespace: cert-manager
+  - name: default-cluster
+    secret: example-com-tls
+    namespace: cert-manager

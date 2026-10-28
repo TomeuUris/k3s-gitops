@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.pfsense.service }}
+  namespace: {{ .Values.pfsense.namespace }}
+spec:
+  ports:
+  - name: {{ .Values.pfsense.service }}
+    port: {{ .Values.pfsense.port }}
+    protocol: TCP
+    targetPort: {{ .Values.pfsense.targetPort }}
+  clusterIP: None

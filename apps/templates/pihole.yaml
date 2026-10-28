@@ -1,0 +1,31 @@
+{{ if .Values.pihole.enabled }}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: pihole
+  namespace: argocd
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  sources:
+    # Public chart from k3s-gitops
+    - repoURL: {{ .Values.global.public_repo_url }}
+      path: charts/pihole
+      targetRevision: {{ .Values.pihole.chart_revision }}
+      helm:
+        valueFiles:
+          - $values/{{ .Values.pihole.values_file }}
+    # Private values from k3s-gitops-secrets
+    - repoURL: {{ .Values.global.private_repo_url }}
+      targetRevision: {{ .Values.global.private_repo_revision }}
+      ref: values
+  destination:
+    server: https://kubernetes.default.svc
+  syncPolicy:
+    automated:
+      selfHeal: true
+      prune: true
+    syncOptions:
+    - CreateNamespace=true
+{{ end }}

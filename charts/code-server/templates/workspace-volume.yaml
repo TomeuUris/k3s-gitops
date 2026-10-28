@@ -1,0 +1,38 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: workspace-volume
+  labels:
+    directory: code-server-workspace
+spec:
+  capacity:
+    storage: {{ .Values.volumes.workspace.size }}
+  accessModes:
+  - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Delete
+  storageClassName: local
+  local:
+    path: {{ .Values.volumes.workspace.path }}
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - kubecluster2
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: workspace-claim
+spec:
+  storageClassName: local
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.volumes.workspace.size }}
+  selector:
+    matchLabels:
+      directory: code-server-workspace

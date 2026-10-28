@@ -1,0 +1,5 @@
+apiVersion: v2
+description: A Helm chart for installing pihole
+icon: https://helm.sh/img/helm.svg
+name: kubecluster-pyhole
+version: "0.0.2"

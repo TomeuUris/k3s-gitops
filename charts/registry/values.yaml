@@ -1,0 +1,12 @@
+replicaCount: 1
+
+image:
+  repository: registry
+  tag: latest
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 80
+
+http_addr: "0.0.0.0:5000"

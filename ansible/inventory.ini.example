@@ -1,0 +1,45 @@
+# K3s Cluster Inventory Template
+#
+# This is a reference template only.
+# Actual inventory.ini with your secrets is stored in the PRIVATE repository:
+# git-ops/ansible/inventory.ini
+#
+# Do NOT create this file here. Instead:
+# 1. Clone both repos
+# 2. Use the inventory.ini from git-ops/ansible/ (private repo)
+# 3. Run: ansible-playbook -i ../git-ops/ansible/inventory.ini site.yml
+#
+# ========================================
+
+[master]
+# Master node IP and infrastructure configuration
+# Example: 192.0.2.10 ansible_user=your-user ...
+#
+# ACTUAL VALUES STORED IN: git-ops/ansible/inventory.ini
+
+[agents]
+# Agent nodes (optional)
+# Example: 192.0.2.11 ansible_user=your-user
+# Example: 192.0.2.12 ansible_user=your-user
+
+[k3s_cluster:children]
+master
+agents
+
+# ========================================
+# Variables Needed (in git-ops/ansible/inventory.ini):
+# ========================================
+# Infrastructure:
+#   - metallb_ip_range: "192.0.2.50-192.0.2.60"
+#   - metallb_pool_name: "main-pool"
+#   - traefik_static_ip: "192.0.2.50"
+#   - cluster_domain: "example.com"
+#
+# GitHub/ArgoCD (SECRETS):
+#   - github_username: "your-username"
+#   - github_token: "your-personal-access-token"
+#   - public_repo_url: "https://github.com/your-username/k3s-gitops.git"
+#   - private_repo_url: "https://github.com/your-username/k3s-gitops-secrets.git"
+#
+# Note: Both repos use HTTPS with GitHub token for authentication
+# ArgoCD will automatically use credentials stored during Ansible setup

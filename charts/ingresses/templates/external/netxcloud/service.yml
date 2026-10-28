@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.nextcloud.service }}
+  namespace: {{ .Values.nextcloud.namespace }}
+spec:
+  ports:
+  - name: {{ .Values.nextcloud.service }}
+    port: {{ .Values.nextcloud.targetPort }}
+    protocol: TCP
+    targetPort: {{ .Values.nextcloud.targetPort }}
+  clusterIP: None

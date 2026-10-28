@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.proxmox.service }}
+  namespace: {{ .Values.proxmox.namespace }}
+spec:
+  ports:
+  - name: {{ .Values.proxmox.service }}
+    port: {{ .Values.proxmox.port }}
+    protocol: TCP
+    targetPort: {{ .Values.proxmox.targetPort }}
+  clusterIP: None

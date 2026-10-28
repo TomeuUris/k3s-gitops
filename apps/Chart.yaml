@@ -1,0 +1,5 @@
+apiVersion: v2
+description: A Helm chart for all the apps debployed in my cluster
+icon: https://helm.sh/img/helm.svg
+name: kubecluster-apps
+version: "0.0.1"

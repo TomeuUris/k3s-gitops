@@ -1,0 +1,32 @@
+{{ if index .Values "code-server" "enabled" }}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: code-server
+  namespace: argocd
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  sources:
+    # Public chart from k3s-gitops
+    - repoURL: {{ .Values.global.public_repo_url }}
+      path: charts/code-server
+      targetRevision: {{ index .Values "code-server" "chart_revision" }}
+      helm:
+        valueFiles:
+          - $values/{{ index .Values "code-server" "values_file" }}
+    # Private values from k3s-gitops-secrets
+    - repoURL: {{ .Values.global.private_repo_url }}
+      targetRevision: {{ .Values.global.private_repo_revision }}
+      ref: values
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: code-server
+  syncPolicy:
+    automated:
+      selfHeal: true
+      prune: true
+    syncOptions:
+    - CreateNamespace=true
+{{ end }}
