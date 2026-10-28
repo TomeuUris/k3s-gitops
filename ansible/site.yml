@@ -1,26 +1,31 @@
 ---
 # This must run before fact gathering because minimal Debian installs may not
-# include sudo yet. Run the initial bootstrap with --ask-become-pass
-# --become-method=su when connecting as a non-root user.
+# include sudo yet.
 - name: Bootstrap privilege escalation
   hosts: k3s_cluster
   gather_facts: false
-  become: true
-  become_method: su
   tasks:
+    - name: Check whether sudo is installed
+      raw: command -v sudo
+      register: sudo_check
+      changed_when: false
+      failed_when: false
+
     - name: Install sudo when missing
       raw: |
-        if command -v sudo >/dev/null 2>&1; then
-          exit 0
-        fi
         apt-get update
         DEBIAN_FRONTEND=noninteractive apt-get install -y sudo
+      become: true
+      become_method: su
+      when: sudo_check.rc != 0
 
     - name: Ensure remote user can use sudo
       user:
         name: "{{ ansible_user | default(ansible_user_id) }}"
         groups: sudo
         append: true
+      become: true
+      become_method: "{{ 'su' if sudo_check.rc != 0 else 'sudo' }}"
 
 # CHAPTER 1: Universal Preparation
 - name: Prepare all nodes
@@ -80,13 +85,33 @@
     - name: Wait for MetalLB CRDs
       shell: kubectl wait --for=condition=established --timeout=60s crd/ipaddresspools.metallb.io
 
+    - name: Wait for MetalLB webhook and controller
+      shell: kubectl wait --for=condition=available --timeout=300s deployment --all -n metallb-system
+
+    - name: Wait for MetalLB webhook endpoints
+      shell: |
+        for attempt in $(seq 1 30); do
+          if kubectl get endpoints metallb-webhook-service -n metallb-system \
+            -o jsonpath='{.subsets[*].addresses[*].ip}' | grep -q .; then
+            exit 0
+          fi
+          sleep 10
+        done
+        echo "MetalLB webhook has no ready endpoints" >&2
+        kubectl get pods,svc,endpoints -n metallb-system
+        exit 1
+
     - name: Apply MetalLB Config from Template
       template:
         src: templates/metallb-config.j2
         dest: /tmp/metallb-config.yaml
-    
+
     - name: Execute MetalLB Manifest
       shell: kubectl apply -f /tmp/metallb-config.yaml
+      register: metallb_config_apply
+      retries: 5
+      delay: 15
+      until: metallb_config_apply.rc == 0
 
     - name: Deploy Traefik v3 (Enabled for WebSecure)
       shell: |
