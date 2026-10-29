@@ -16,7 +16,7 @@ spec:
         - name: {{ .Values.argocd.service }}
           port: {{ .Values.argocd.port }}
     - kind: Rule
-      match: Host(`{{ .Values.argocd.host }}.{{ .Values.baseUri }}`) && Headers(`Content-Type`, `application/grpc`)
+      match: Host(`{{ .Values.argocd.host }}.{{ .Values.baseUri }}`) && Header(`Content-Type`, `application/grpc`)
       priority: 11
       services:
         - name: {{ .Values.argocd.service }}
