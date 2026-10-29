@@ -8,16 +8,12 @@ metadata:
   - resources-finalizer.argocd.argoproj.io
 spec:
   project: default
-  sources:
-    - chart: vault
-      repoURL: https://helm.releases.hashicorp.com
-      targetRevision: {{ .Values.vault.chart_revision }}
-      helm:
-        valueFiles:
-          - $values/{{ .Values.vault.values_file }}
-    - repoURL: {{ .Values.global.private_repo_url }}
-      targetRevision: {{ .Values.global.private_repo_revision }}
-      ref: values
+  source:
+    chart: vault
+    repoURL: https://helm.releases.hashicorp.com
+    targetRevision: {{ .Values.vault.chart_revision }}
+    helm:
+      values: {{ toYaml .Values.vault.values | nindent 8 }}
   destination:
     namespace: vault
     server: https://kubernetes.default.svc

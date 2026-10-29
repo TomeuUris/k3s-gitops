@@ -35,11 +35,5 @@ agents
 #   - traefik_static_ip: "192.0.2.50"
 #   - cluster_domain: "example.com"
 #
-# GitHub/ArgoCD (SECRETS):
-#   - github_username: "your-username"
-#   - github_token: "your-personal-access-token"
-#   - public_repo_url: "https://github.com/your-username/k3s-gitops.git"
-#   - private_repo_url: "https://github.com/your-username/k3s-gitops-secrets.git"
-#
-# Note: Both repos use HTTPS with GitHub token for authentication
-# ArgoCD will automatically use credentials stored during Ansible setup
+# The bootstrap Application uses the canonical public repository and reads
+# private values from ../git-ops/cluster-apps/app.yaml on the Ansible host.

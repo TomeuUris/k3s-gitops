@@ -8,16 +8,12 @@ metadata:
   - resources-finalizer.argocd.argoproj.io
 spec:
   project: default
-  sources:
-    - chart: rancher
-      repoURL: https://releases.rancher.com/server-charts/stable
-      targetRevision: {{ .Values.rancher.chart_revision }}
-      helm:
-        valueFiles:
-          - $values/{{ .Values.rancher.values_file }}
-    - repoURL: {{ .Values.global.private_repo_url }}
-      targetRevision: {{ .Values.global.private_repo_revision }}
-      ref: values
+  source:
+    chart: rancher
+    repoURL: https://releases.rancher.com/server-charts/stable
+    targetRevision: {{ .Values.rancher.chart_revision }}
+    helm:
+      values: {{ toYaml .Values.rancher.values | nindent 8 }}
   destination:
     namespace: cattle-system
     server: https://kubernetes.default.svc

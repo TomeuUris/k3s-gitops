@@ -8,16 +8,12 @@ metadata:
   - resources-finalizer.argocd.argoproj.io
 spec:
   project: default
-  sources:
-    - chart: keycloak
-      repoURL: https://codecentric.github.io/helm-charts
-      targetRevision: {{ .Values.keycloak.chart_revision }}
-      helm:
-        valueFiles:
-          - $values/{{ .Values.keycloak.values_file }}
-    - repoURL: {{ .Values.global.private_repo_url }}
-      targetRevision: {{ .Values.global.private_repo_revision }}
-      ref: values
+  source:
+    chart: keycloak
+    repoURL: https://codecentric.github.io/helm-charts
+    targetRevision: {{ .Values.keycloak.chart_revision }}
+    helm:
+      values: {{ toYaml .Values.keycloak.values | nindent 8 }}
   destination:
     namespace: keycloak
     server: https://kubernetes.default.svc

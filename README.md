@@ -153,30 +153,25 @@ spec:
     repoURL: https://github.com/your-username/k3s-gitops.git
     path: apps                          # Public Helm chart (generic templates)
     helm:
-      values: |
-        global:
-          private_repo_url: https://... # Reference to private repo
+    values: |
+      cert-manager:
+        enabled: true
+        chart_revision: main          # Pin version for rollbacks
+        values:
+          installCRDs: true
+          # Private environment values are embedded here.
 
-        cert-manager:
-          enabled: true
-          chart_revision: main          # Pin version for rollbacks
-          values_file: environments/home-lab/cert-manager.yaml
+      pihole:
+        enabled: false
+        chart_revision: HEAD
+        values: {}
 
-        pihole:
-          enabled: true
-          chart_revision: HEAD
-          values_file: environments/home-lab/pihole.yaml
-
-        # ... all other apps
+      # ... all other apps
 ```
 
-Individual app configs stay in `environments/home-lab/`:
-```yaml
-# k3s-gitops-secrets/environments/home-lab/cert-manager.yaml
-installCRDs: true
-email: user@example.com
-# ... domain, API tokens, secrets, etc
-```
+The public chart does not read private files or repository references. The
+private root Application is the source of truth and injects each app's values
+inline.
 
 ### Making Apps Optional
 
@@ -186,7 +181,7 @@ Toggle any app on/off in `cluster-apps/app.yaml`:
 keycloak:
   enabled: false         # Won't deploy
   chart_revision: main
-  values_file: environments/home-lab/keycloak.yaml
+  values: {}
 ```
 
 ### Version Pinning for Rollbacks
@@ -197,7 +192,8 @@ Set specific chart versions in your private config:
 traefik:
   enabled: true
   chart_revision: "35.2.0"  # Pin to exact version for rollback control
-  values_file: environments/home-lab/traefik.yaml
+  values:
+    # Private Traefik values go here.
 ```
 
 ### Available Applications

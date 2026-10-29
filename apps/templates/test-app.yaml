@@ -12,16 +12,12 @@ metadata:
     argocd-image-updater.argoproj.io/git-branch: main
 spec:
   project: default
-  sources:
-    - repoURL: {{ .Values.global.public_repo_url }}
-      path: charts/test-app
-      targetRevision: {{ index .Values "test-app" "chart_revision" }}
-      helm:
-        valueFiles:
-          - $values/{{ index .Values "test-app" "values_file" }}
-    - repoURL: {{ .Values.global.private_repo_url }}
-      targetRevision: {{ .Values.global.private_repo_revision }}
-      ref: values
+  source:
+    repoURL: https://github.com/TomeuUris/k3s-gitops.git
+    path: charts/test-app
+    targetRevision: {{ index .Values "test-app" "chart_revision" }}
+    helm:
+      values: {{ toYaml (index .Values "test-app" "values") | nindent 8 }}
   destination:
     namespace: test-app
     server: https://kubernetes.default.svc

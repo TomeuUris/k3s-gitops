@@ -8,18 +8,12 @@ metadata:
   - resources-finalizer.argocd.argoproj.io
 spec:
   project: default
-  sources:
-    # Public chart
-    - repoURL: {{ .Values.global.public_repo_url }}
-      path: charts/registry
-      targetRevision: {{ .Values.registry.chart_revision }}
-      helm:
-        valueFiles:
-          - $values/{{ .Values.registry.values_file }}
-    # Private values
-    - repoURL: {{ .Values.global.private_repo_url }}
-      targetRevision: {{ .Values.global.private_repo_revision }}
-      ref: values
+  source:
+    repoURL: https://github.com/TomeuUris/k3s-gitops.git
+    path: charts/registry
+    targetRevision: {{ .Values.registry.chart_revision }}
+    helm:
+      values: {{ toYaml .Values.registry.values | nindent 8 }}
   destination:
     server: https://kubernetes.default.svc
     namespace: registry

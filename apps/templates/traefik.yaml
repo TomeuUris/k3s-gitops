@@ -8,17 +8,12 @@ metadata:
   - resources-finalizer.argocd.argoproj.io
 spec:
   project: default
-  sources:
-    - chart: traefik
-      repoURL: https://helm.traefik.io/traefik
-      targetRevision: {{ .Values.traefik.chart_revision }}
-      helm:
-        valueFiles:
-          - $values/{{ .Values.traefik.values_file }}
-    - repoURL: {{ .Values.global.private_repo_url }}
-      targetRevision: {{ .Values.global.private_repo_revision }}
-      ref: values
-
+  source:
+    chart: traefik
+    repoURL: https://helm.traefik.io/traefik
+    targetRevision: {{ .Values.traefik.chart_revision }}
+    helm:
+      values: {{ toYaml .Values.traefik.values | nindent 8 }}
   destination:
     namespace: traefik
     server: https://kubernetes.default.svc

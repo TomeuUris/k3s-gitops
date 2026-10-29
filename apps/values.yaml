@@ -1,58 +1,54 @@
-global:
-  private_repo_url: https://github.com/your-username/k3s-gitops-secrets.git
-  public_repo_revision: main
-  private_repo_revision: main
-
 argocd-image-updater:
   enabled: false
   chart_revision: HEAD
+  values: {}
 
 cert-manager:
   enabled: true
   chart_revision: HEAD
-  values_file: environments/home-lab/cert-manager.yaml
+  values: {}
 
 pihole:
   enabled: true
   chart_revision: HEAD
-  values_file: environments/home-lab/pihole.yaml
+  values: {}
 
 keycloak:
   enabled: true
   chart_revision: "18.10.0"
-  values_file: environments/home-lab/keycloak.yaml
+  values: {}
 
 rancher:
   enabled: true
   chart_revision: "2.15.2"
-  values_file: environments/home-lab/rancher.yaml
+  values: {}
 
 traefik:
   enabled: true
   chart_revision: "42.1.3"
-  values_file: environments/home-lab/traefik.yaml
+  values: {}
 
 vault:
   enabled: true
   chart_revision: "0.34.1"
-  values_file: environments/home-lab/vault.yaml
+  values: {}
 
 registry:
   enabled: true
   chart_revision: HEAD
-  values_file: environments/home-lab/registry.yaml
+  values: {}
 
 code-server:
   enabled: true
   chart_revision: HEAD
-  values_file: environments/home-lab/code-server.yaml
+  values: {}
 
 test-app:
   enabled: true
   chart_revision: HEAD
-  values_file: environments/home-lab/test-app.yaml
+  values: {}
 
 ingresses:
   enabled: true
   chart_revision: HEAD
-  values_file: environments/home-lab/ingresses.yaml
+  values: {}

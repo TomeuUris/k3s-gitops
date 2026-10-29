@@ -1,3 +1,4 @@
+{% set private_app = lookup('file', private_app_manifest_path) | from_yaml %}
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
@@ -8,16 +9,12 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: "{{ public_repo_url }}"
-    targetRevision: "{{ public_repo_revision | default('main') }}"
+    repoURL: https://github.com/TomeuUris/k3s-gitops.git
+    targetRevision: main
     path: apps
     helm:
       values: |
-          global:
-            public_repo_url: {{ public_repo_url }}
-            private_repo_url: {{ private_repo_url }}
-            public_repo_revision: {{ public_repo_revision | default('main') }}
-            private_repo_revision: {{ private_repo_revision | default('main') }}
+{{ private_app['spec']['source']['helm']['values'] | indent(8, true) }}
   destination:
     server: https://kubernetes.default.svc
     namespace: argocd

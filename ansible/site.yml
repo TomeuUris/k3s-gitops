@@ -41,6 +41,7 @@
   become_method: sudo
   vars:
     ansible_become_timeout: 60
+    private_app_manifest_path: "{{ playbook_dir }}/../../git-ops/cluster-apps/app.yaml"
     k3s_version: v1.35.5+k3s1
   tasks:
     - name: Install K3s Master
@@ -158,51 +159,6 @@
 
     - name: Wait for ArgoCD to be ready
       shell: kubectl wait --for=condition=available --timeout=300s deployment/argocd-server -n argocd
-
-    - name: Create GitHub credentials Secret for ArgoCD
-      no_log: true
-      shell: |
-        kubectl create secret generic github-credentials \
-          --from-literal=username={{ github_username }} \
-          --from-literal=token={{ github_token }} \
-          --namespace argocd \
-          --dry-run=client -o yaml | kubectl apply -f -
-
-    - name: Register public repository in ArgoCD
-      no_log: true
-      shell: |
-        kubectl apply -f - <<EOF
-        apiVersion: v1
-        kind: Secret
-        metadata:
-          name: repo-k3s-gitops
-          namespace: argocd
-          labels:
-            argocd.argoproj.io/secret-type: repository
-        stringData:
-          type: git
-          url: {{ public_repo_url }}
-          username: {{ github_username }}
-          password: {{ github_token }}
-        EOF
-
-    - name: Register private repository in ArgoCD
-      no_log: true
-      shell: |
-        kubectl apply -f - <<EOF
-        apiVersion: v1
-        kind: Secret
-        metadata:
-          name: repo-k3s-gitops-secrets
-          namespace: argocd
-          labels:
-            argocd.argoproj.io/secret-type: repository
-        stringData:
-          type: git
-          url: {{ private_repo_url }}
-          username: {{ github_username }}
-          password: {{ github_token }}
-        EOF
 
     - name: Prepare ArgoCD Bootstrap Application
       template:
