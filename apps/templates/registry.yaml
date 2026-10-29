@@ -13,7 +13,8 @@ spec:
     path: charts/registry
     targetRevision: {{ .Values.registry.chart_revision }}
     helm:
-      values: {{ toYaml .Values.registry.values | nindent 8 }}
+      values: |
+{{ toYaml .Values.registry.values | nindent 8 }}
   destination:
     server: https://kubernetes.default.svc
     namespace: registry

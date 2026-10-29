@@ -13,7 +13,8 @@ spec:
     repoURL: https://releases.rancher.com/server-charts/stable
     targetRevision: {{ .Values.rancher.chart_revision }}
     helm:
-      values: {{ toYaml .Values.rancher.values | nindent 8 }}
+      values: |
+{{ toYaml .Values.rancher.values | nindent 8 }}
   destination:
     namespace: cattle-system
     server: https://kubernetes.default.svc

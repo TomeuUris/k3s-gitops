@@ -13,7 +13,8 @@ spec:
     repoURL: https://helm.traefik.io/traefik
     targetRevision: {{ .Values.traefik.chart_revision }}
     helm:
-      values: {{ toYaml .Values.traefik.values | nindent 8 }}
+      values: |
+{{ toYaml .Values.traefik.values | nindent 8 }}
   destination:
     namespace: traefik
     server: https://kubernetes.default.svc

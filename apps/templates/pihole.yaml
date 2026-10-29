@@ -13,7 +13,8 @@ spec:
     path: charts/pihole
     targetRevision: {{ .Values.pihole.chart_revision }}
     helm:
-      values: {{ toYaml .Values.pihole.values | nindent 8 }}
+      values: |
+{{ toYaml .Values.pihole.values | nindent 8 }}
   destination:
     server: https://kubernetes.default.svc
   syncPolicy:

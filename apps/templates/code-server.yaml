@@ -13,7 +13,8 @@ spec:
     path: charts/code-server
     targetRevision: {{ index .Values "code-server" "chart_revision" }}
     helm:
-      values: {{ toYaml (index .Values "code-server" "values") | nindent 8 }}
+      values: |
+{{ toYaml (index .Values "code-server" "values") | nindent 8 }}
   destination:
     server: https://kubernetes.default.svc
     namespace: code-server

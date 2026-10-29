@@ -13,7 +13,8 @@ spec:
     path: charts/ingresses
     targetRevision: {{ .Values.ingresses.chart_revision }}
     helm:
-      values: {{ toYaml .Values.ingresses.values | nindent 8 }}
+      values: |
+{{ toYaml .Values.ingresses.values | nindent 8 }}
   destination:
     server: https://kubernetes.default.svc
   syncPolicy:

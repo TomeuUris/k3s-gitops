@@ -13,7 +13,8 @@ spec:
     repoURL: https://helm.releases.hashicorp.com
     targetRevision: {{ .Values.vault.chart_revision }}
     helm:
-      values: {{ toYaml .Values.vault.values | nindent 8 }}
+      values: |
+{{ toYaml .Values.vault.values | nindent 8 }}
   destination:
     namespace: vault
     server: https://kubernetes.default.svc

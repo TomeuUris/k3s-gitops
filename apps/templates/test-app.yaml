@@ -17,7 +17,8 @@ spec:
     path: charts/test-app
     targetRevision: {{ index .Values "test-app" "chart_revision" }}
     helm:
-      values: {{ toYaml (index .Values "test-app" "values") | nindent 8 }}
+      values: |
+{{ toYaml (index .Values "test-app" "values") | nindent 8 }}
   destination:
     namespace: test-app
     server: https://kubernetes.default.svc
