@@ -119,6 +119,8 @@
           --namespace traefik --create-namespace \
           --set service.type=LoadBalancer \
           --set "service.annotations.metallb\.universe\.tf/loadBalancerIPs={{ traefik_static_ip }}" \
+          --set providers.kubernetesCRD.ingressClass=traefik-external \
+          --set providers.kubernetesIngress.ingressClass=traefik-external \
           --set ports.web.exposedPort=80 \
           --set ports.websecure.exposedPort=443
 
