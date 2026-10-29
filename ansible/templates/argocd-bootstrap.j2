@@ -8,10 +8,16 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: "{{ private_repo_url }}"
-    targetRevision: "{{ private_repo_revision | default('main') }}"
-    path: cluster-apps
-    directory: {}
+    repoURL: "{{ public_repo_url }}"
+    targetRevision: "{{ public_repo_revision | default('main') }}"
+    path: apps
+    helm:
+      values: |
+          global:
+            public_repo_url: {{ public_repo_url }}
+            private_repo_url: {{ private_repo_url }}
+            public_repo_revision: {{ public_repo_revision | default('main') }}
+            private_repo_revision: {{ private_repo_revision | default('main') }}
   destination:
     server: https://kubernetes.default.svc
     namespace: argocd
