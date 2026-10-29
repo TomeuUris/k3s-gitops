@@ -101,6 +101,8 @@ Use `-e kubeconfig_path=/path/to/config` to write a different kubeconfig.
 - Two repositories cloned side-by-side
 - Ansible installed on your machine
 - SSH access to your cluster nodes
+- A supported K3s version; the bootstrap currently pins K3s
+  `v1.35.5+k3s1`, which is within the Rancher 2.15 support range.
 
 ### 2. Configure Your Deployment
 All configuration lives in the **private repo**:

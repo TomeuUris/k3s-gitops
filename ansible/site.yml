@@ -19,18 +19,14 @@
       become_method: su
       when: sudo_check.rc != 0
 
-    - name: Ensure remote user can use sudo
-      user:
-        name: "{{ ansible_user | default(ansible_user_id) }}"
-        groups: sudo
-        append: true
-      become: true
-      become_method: "{{ 'su' if sudo_check.rc != 0 else 'sudo' }}"
-
 # CHAPTER 1: Universal Preparation
 - name: Prepare all nodes
   hosts: k3s_cluster
+  gather_facts: false
   become: true
+  become_method: sudo
+  vars:
+    ansible_become_timeout: 60
   tasks:
     - name: Install dependencies
       apt:
@@ -40,13 +36,19 @@
 # CHAPTER 2: Master Node Setup
 - name: Setup Master Node
   hosts: master
+  gather_facts: false
   become: true
+  become_method: sudo
+  vars:
+    ansible_become_timeout: 60
+    k3s_version: v1.35.5+k3s1
   tasks:
     - name: Install K3s Master
       shell: |
-        curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC="--disable servicelb --disable traefik --write-kubeconfig-mode 644" sh -
+        curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION="{{ k3s_version }}" INSTALL_K3S_EXEC="--disable servicelb --disable traefik --write-kubeconfig-mode 644" sh -
       args:
         creates: /usr/local/bin/k3s
+      become_method: sudo
 
     - name: Get Node Token from Master
       slurp:
@@ -60,7 +62,11 @@
 # CHAPTER 3: Install Cluster Services (Handover to GitOps)
 - name: Install Cluster Services
   hosts: master
+  gather_facts: false
   become: true
+  become_method: sudo
+  vars:
+    ansible_become_timeout: 60
   environment:
     KUBECONFIG: /etc/rancher/k3s/k3s.yaml
   tasks:
@@ -72,6 +78,14 @@
         extra_opts: "--strip-components=1"
         creates: /usr/local/bin/helm
 
+    - name: Wait for Kubernetes API and storage to be ready
+      shell: kubectl get --raw='/readyz'
+      register: kubernetes_ready
+      changed_when: false
+      retries: 30
+      delay: 10
+      until: kubernetes_ready.rc == 0
+
     - name: Add Helm Repositories
       shell: |
         helm repo add metallb https://metallb.github.io/metallb
@@ -81,6 +95,10 @@
 
     - name: Deeploy MetalLB via Helm
       shell: helm upgrade --install metallb metallb/metallb --namespace metallb-system --create-namespace
+      register: metallb_install
+      retries: 5
+      delay: 20
+      until: metallb_install.rc == 0
 
     - name: Wait for MetalLB CRDs
       shell: kubectl wait --for=condition=established --timeout=60s crd/ipaddresspools.metallb.io
@@ -113,16 +131,23 @@
       delay: 15
       until: metallb_config_apply.rc == 0
 
-    - name: Deploy Traefik v3 (Enabled for WebSecure)
+    - name: Bootstrap Traefik v3 for ArgoCD management
       shell: |
-        helm upgrade --install traefik traefik/traefik \
+        if helm status traefik --namespace traefik >/dev/null 2>&1; then
+          helm uninstall traefik --namespace traefik
+        fi
+        helm upgrade --install traefik-app traefik/traefik \
+          --version 42.1.3 \
           --namespace traefik --create-namespace \
           --set service.type=LoadBalancer \
           --set "service.annotations.metallb\.universe\.tf/loadBalancerIPs={{ traefik_static_ip }}" \
           --set providers.kubernetesCRD.ingressClass=traefik-external \
           --set providers.kubernetesIngress.ingressClass=traefik-external \
           --set ports.web.exposedPort=80 \
-          --set ports.websecure.exposedPort=443
+          --set ports.websecure.exposedPort=443 \
+          --set ports.sftp.port=2023 \
+          --set ports.sftp.expose.default=true \
+          --set ports.sftp.exposedPort=2023
 
     - name: Deploy ArgoCD via Helm
       shell: |
@@ -190,10 +215,15 @@
 # CHAPTER 4: Agent Node Setup (Ready for the future)
 - name: Join Agent Nodes to Cluster
   hosts: agents
+  gather_facts: false
   become: true
+  become_method: sudo
+  vars:
+    ansible_become_timeout: 60
+    k3s_version: v1.35.5+k3s1
   tasks:
     - name: Install K3s Agent and Join
       shell: |
-        curl -sfL https://get.k3s.io | K3S_URL=https://{{ hostvars[groups['master'][0]]['inventory_hostname'] }}:6443 K3S_TOKEN={{ hostvars[groups['master'][0]]['node_token'] }} sh -
+        curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION="{{ k3s_version }}" K3S_URL=https://{{ hostvars[groups['master'][0]]['inventory_hostname'] }}:6443 K3S_TOKEN={{ hostvars[groups['master'][0]]['node_token'] }} sh -
       args:
         creates: /usr/local/bin/k3s
