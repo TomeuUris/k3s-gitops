@@ -19,22 +19,22 @@ pihole:
 
 keycloak:
   enabled: true
-  chart_revision: HEAD
+  chart_revision: "18.10.0"
   values_file: environments/home-lab/keycloak.yaml
 
 rancher:
   enabled: true
-  chart_revision: HEAD
+  chart_revision: "2.15.2"
   values_file: environments/home-lab/rancher.yaml
 
 traefik:
   enabled: true
-  chart_revision: HEAD
+  chart_revision: "42.1.3"
   values_file: environments/home-lab/traefik.yaml
 
 vault:
   enabled: true
-  chart_revision: HEAD
+  chart_revision: "0.34.1"
   values_file: environments/home-lab/vault.yaml
 
 registry:
