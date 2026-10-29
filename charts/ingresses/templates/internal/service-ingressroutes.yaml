@@ -1,0 +1,10 @@
+{{- $routes := list
+  (dict "name" "rancher-dashboard" "config" .Values.rancher)
+  (dict "name" "pihole-dashboard" "config" .Values.pihole)
+  (dict "name" "vault-ui" "config" .Values.vault)
+  (dict "name" "keycloak" "config" .Values.keycloak)
+  (dict "name" "registry" "config" .Values.registry)
+-}}
+{{- range $route := $routes }}
+{{ include "kubecluster-ingresses.serviceRoute" (dict "root" $ "name" $route.name "config" $route.config) }}
+{{- end }}

@@ -1,3 +1,4 @@
+{{ if .Values.pterodactylNode.enabled }}
 apiVersion: traefik.io/v1alpha1
 kind: IngressRoute
 metadata:
@@ -33,3 +34,4 @@ spec:
       services:
         - name: {{ .Values.pterodactylNode.service }}
           port: sftp
+{{ end }}

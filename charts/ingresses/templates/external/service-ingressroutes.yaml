@@ -1,0 +1,11 @@
+{{- $routes := list
+  (dict "name" "pfsense-external" "config" .Values.pfsense)
+  (dict "name" "proxmox-external" "config" .Values.proxmox)
+  (dict "name" "plex-external" "config" .Values.plex)
+  (dict "name" "nextcloud-external" "config" .Values.nextcloud)
+  (dict "name" "jellyfin-external" "config" .Values.jellyfin)
+  (dict "name" "pterodactyl-external" "config" .Values.pterodactyl)
+-}}
+{{- range $route := $routes }}
+{{ include "kubecluster-ingresses.externalRoute" (dict "root" $ "name" $route.name "config" $route.config) }}
+{{- end }}

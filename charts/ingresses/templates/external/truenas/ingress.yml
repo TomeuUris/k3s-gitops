@@ -1,3 +1,4 @@
+{{ if .Values.truenas.enabled }}
 apiVersion: traefik.io/v1alpha1
 kind: IngressRoute
 metadata:
@@ -82,3 +83,4 @@ spec:
     services:
     - name: {{ .Values.truenas.service }}-samba
       port: 445
+{{ end }}
